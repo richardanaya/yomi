@@ -45,3 +45,7 @@ Click lit stones. **1** Ayumi · **2** Keri · **3** Nage · **P** shrine (if ad
 ## Stack
 
 Static HTML / CSS / ES modules. Art in `assets/` (Grok Imagine). Title screen uses `assets/title.mp4` (looped, muted) with `title.jpg` as poster fallback.
+
+## License
+
+[MIT](LICENSE) © 2026 Richard Anaya

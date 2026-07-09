@@ -2,7 +2,8 @@
   "name": "yomi",
   "version": "1.0.0",
   "type": "module",
-  "description": "Turn-based hex tactics — Hoplite-inspired, samurai vs yokai",
+  "license": "MIT",
+  "description": "Turn-based hex tactics — samurai vs yokai in Yomi",
   "private": true,
   "scripts": {
     "start": "npx --yes serve -p 8080",
