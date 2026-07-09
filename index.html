@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YOMI — Path of the Dead</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Title Screen -->
+    <div id="screen-title" class="screen active">
+      <div class="title-bg"></div>
+      <div class="title-art" aria-hidden="true">
+        <img class="title-still" src="assets/title.jpg" alt="" />
+        <video
+          id="title-video"
+          class="title-video"
+          src="assets/title.mp4"
+          poster="assets/title.jpg"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="auto"
+        ></video>
+        <div class="title-video-veil"></div>
+      </div>
+      <div class="title-content">
+        <p class="title-kana">黄泉</p>
+        <h1 class="title-main">YOMI</h1>
+        <p class="title-sub">Path of the Dead</p>
+        <p class="title-desc">
+          The Magatama was stolen into the underworld. You follow—
+          blades in hand, breath measured—across stones that float on black water.
+          The dead do not forgive haste.
+        </p>
+        <div class="title-roster" aria-hidden="true">
+          <img src="assets/samurai.png" alt="" class="roster-icon" />
+          <img src="assets/oni.png" alt="" class="roster-icon" />
+          <img src="assets/tengu.png" alt="" class="roster-icon" />
+          <img src="assets/bakemono.png" alt="" class="roster-icon" />
+          <img src="assets/onryo.png" alt="" class="roster-icon" />
+        </div>
+        <div class="title-buttons">
+          <button id="btn-start" class="btn primary">Cross the Threshold</button>
+          <button id="btn-help" class="btn ghost">How to Play</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Screen -->
+    <div id="screen-help" class="screen">
+      <div class="panel help-panel">
+        <header class="help-header">
+          <h2>How to Play</h2>
+          <p class="help-lead">Reach each <strong>torii</strong> with wakizashi reclaimed. On stratum 16, claim the <strong>Magatama</strong> and escape. You act—then the dead answer.</p>
+        </header>
+        <div class="help-grid">
+          <section>
+            <h3>Footwork</h3>
+            <ul>
+              <li><strong>Ayumi</strong> — step to a neighboring stone (green)</li>
+              <li><strong>Hishō</strong> — bound farther (blue); costs Ki</li>
+              <li><strong>Nadegiri</strong> — path brushes a yokai on both sides → cut</li>
+              <li><strong>Tsuki</strong> — advance toward a foe with a gap between; katana thrusts (never step onto them)</li>
+            </ul>
+          </section>
+          <section>
+            <h3>Techniques</h3>
+            <ul>
+              <li><strong>Keri</strong> — drive a yokai back; black water kills</li>
+              <li><strong>Nage</strong> — throw the wakizashi; reclaim it to exit</li>
+              <li><strong>Shrine</strong> — stand beside it, click once per stratum</li>
+              <li><strong>Tamerau</strong> — skip a turn (if gifted)</li>
+            </ul>
+          </section>
+          <section>
+            <h3>Yokai</h3>
+            <ul class="yokai-help-list">
+              <li><img src="assets/oni.png" alt="" /><span><strong>Oni</strong> — adjacent club</span></li>
+              <li><img src="assets/tengu.png" alt="" /><span><strong>Tengu</strong> — line arrows</span></li>
+              <li><img src="assets/bakemono.png" alt="" /><span><strong>Bakemono</strong> — bombs</span></li>
+              <li><img src="assets/onryo.png" alt="" /><span><strong>Onryō</strong> — fire beams</span></li>
+            </ul>
+          </section>
+          <section>
+            <h3>Remember</h3>
+            <ul>
+              <li>Cuts come from where you stand, not a separate attack</li>
+              <li>Ki returns beside threats, or from blood</li>
+              <li>No second life — one mistake ends the run</li>
+              <li><strong>1</strong> Ayumi · <strong>2</strong> Keri · <strong>3</strong> Nage · <strong>Esc</strong> pause</li>
+            </ul>
+          </section>
+        </div>
+        <button id="btn-help-back" class="btn primary">Return</button>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="screen-game" class="screen">
+      <div id="hit-flash" class="hit-flash" aria-hidden="true"></div>
+      <header id="hud">
+        <div class="hud-left">
+          <div class="hud-depth">
+            <span class="label">Stratum</span>
+            <span id="hud-depth" class="value">1</span>
+          </div>
+          <div class="hud-hearts" id="hud-hearts" title="Inochi — the life still in you"></div>
+        </div>
+        <div class="hud-center">
+          <div class="hud-spirit" title="Ki · 氣 — spent on Hishō">
+            <div class="ki-gauge">
+              <svg class="ki-ring" viewBox="0 0 56 56" aria-hidden="true">
+                <defs>
+                  <linearGradient id="ki-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#4ec4b0" />
+                    <stop offset="45%" stop-color="#7ee8d4" />
+                    <stop offset="100%" stop-color="#d4a84b" />
+                  </linearGradient>
+                  <filter id="ki-glow" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur stdDeviation="1.6" result="b" />
+                    <feMerge>
+                      <feMergeNode in="b" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+                <!-- track -->
+                <circle class="ki-track" cx="28" cy="28" r="22" />
+                <!-- ticks -->
+                <g class="ki-ticks" id="hud-spirit-ticks"></g>
+                <!-- fill arc -->
+                <circle
+                  id="hud-spirit-fill"
+                  class="ki-fill"
+                  cx="28"
+                  cy="28"
+                  r="22"
+                  filter="url(#ki-glow)"
+                />
+              </svg>
+              <div class="ki-core">
+                <span class="ki-glyph">氣</span>
+                <span id="hud-spirit-text" class="ki-value">100</span>
+              </div>
+            </div>
+            <div class="ki-beads" id="hud-spirit-beads" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="hud-right">
+          <button id="btn-menu" class="btn-icon btn-kiku" title="Menu" aria-label="Menu">
+            <svg class="kiku-icon" viewBox="0 0 32 32" aria-hidden="true">
+              <!-- Stylized chrysanthemum (kiku) -->
+              <g fill="currentColor">
+                <circle cx="16" cy="16" r="3.2" />
+                <g id="kiku-petals">
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(22.5 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(45 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(67.5 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(90 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(112.5 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(135 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(157.5 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(180 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(202.5 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(225 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(247.5 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(270 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(292.5 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(315 16 16)" />
+                  <ellipse cx="16" cy="6.5" rx="2.1" ry="5.2" transform="rotate(337.5 16 16)" />
+                </g>
+                <circle cx="16" cy="16" r="2" fill="var(--ink, #0c0a12)" />
+                <circle cx="16" cy="16" r="1.15" />
+              </g>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main id="stage">
+        <canvas id="game-canvas"></canvas>
+        <div id="float-msg" class="float-msg hidden"></div>
+      </main>
+
+      <footer id="action-bar">
+        <div class="mode-buttons">
+          <button class="mode-btn active" data-mode="move" id="mode-move" title="Ayumi, Hishō, and the cuts they carry">
+            <img class="mode-art" src="assets/samurai.png" alt="" />
+            <span>Ayumi</span>
+          </button>
+          <button class="mode-btn" data-mode="bash" id="mode-bash" title="Keri — drive them from the stones">
+            <img class="mode-art" src="assets/keri.png" alt="" />
+            <span>Keri</span>
+          </button>
+          <button class="mode-btn" data-mode="throw" id="mode-throw" title="Nage — hurl the wakizashi">
+            <img class="mode-art" src="assets/wakizashi.png" alt="" />
+            <span>Nage</span>
+          </button>
+          <button class="mode-btn" data-mode="wait" id="mode-wait" title="Tamerau — still the breath" disabled>
+            <span class="mode-icon mode-kanji">忍</span>
+            <span>Tamerau</span>
+          </button>
+        </div>
+        <div id="status-line" class="status-line">The stones that answer you are lit.</div>
+      </footer>
+
+      <!-- Blessing modal -->
+      <div id="modal-blessing" class="modal hidden">
+        <div class="modal-card">
+          <h2>Whisper at the Shrine</h2>
+          <p class="modal-sub">A scrap of doctrine remains. Take one—or walk on unchanged.</p>
+          <div id="blessing-options" class="blessing-options"></div>
+          <button id="btn-skip-blessing" class="btn ghost">Bow and leave</button>
+        </div>
+      </div>
+
+      <!-- Pause / death / win modals -->
+      <div id="modal-pause" class="modal hidden">
+        <div class="modal-card">
+          <h2>Stillness</h2>
+          <button id="btn-resume" class="btn primary">Continue</button>
+          <button id="btn-restart" class="btn ghost">Begin anew</button>
+          <button id="btn-to-title" class="btn ghost">Leave the dark</button>
+          <button id="btn-how" class="btn ghost">How to Play</button>
+        </div>
+      </div>
+
+      <div id="modal-death" class="modal hidden">
+        <div class="modal-card death">
+          <p class="kana">死</p>
+          <h2>The Dark Keeps You</h2>
+          <p id="death-msg" class="modal-sub">Yomi has closed its hand.</p>
+          <p id="death-stats" class="death-stats"></p>
+          <button id="btn-death-retry" class="btn primary">Try the path again</button>
+          <button id="btn-death-title" class="btn ghost">Leave the dark</button>
+        </div>
+      </div>
+
+      <div id="modal-win" class="modal hidden">
+        <div class="modal-card win">
+          <p class="kana">還</p>
+          <h2>Returned to the Living</h2>
+          <p class="modal-sub">The Magatama warms in your palm. Behind you, the torii seals. Dawn is not a myth after all.</p>
+          <p id="win-stats" class="death-stats"></p>
+          <button id="btn-win-again" class="btn primary">Walk Yomi once more</button>
+          <button id="btn-win-title" class="btn ghost">Leave the dark</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
