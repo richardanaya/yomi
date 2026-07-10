@@ -13,9 +13,23 @@ import {
   performBash,
   performThrow,
   tickBashCooldown,
+  enemyAt,
+  bombAt,
+  isPlayerTrapped,
 } from "./combat.js";
 import { enemyTurn } from "./ai.js";
 import { offerBlessings, applyBlessing } from "./upgrades.js";
+import { isLandTile } from "./map.js";
+
+/** Longest queued VFX (delay + duration), for death beat timing. */
+function maxFxDuration(fxList) {
+  if (!fxList?.length) return 0;
+  let max = 0;
+  for (const f of fxList) {
+    max = Math.max(max, (f.delay || 0) + (f.duration || 400));
+  }
+  return max;
+}
 
 export class Game {
   constructor({ onStateChange, onMessage, onBlessing, onDeath, onWin, onFloorClear, onHit, onFx }) {
@@ -169,7 +183,7 @@ export class Game {
     const isLeap = leap.some((h) => h.equals(hex));
 
     if (!isWalk && !isLeap) {
-      this.cbs.onMessage?.("That stone will not take your weight.");
+      this.cbs.onMessage?.(this.moveRejectMessage(state, hex));
       return;
     }
 
@@ -180,6 +194,47 @@ export class Game {
     this.syncFrom(state);
     this.emitKillFx(result.killed);
     this.afterPlayerAction(result.msgs);
+  }
+
+  /**
+   * Why a click was not a legal Ayumi/Hishō step.
+   * Exit/torii is land but often gated — never use the abyss line for it.
+   */
+  moveRejectMessage(state, hex) {
+    const onExit = this.exit && hex.equals(this.exit);
+    if (onExit) {
+      if (!this.player.hasYari) {
+        return "Not without the wakizashi. It still lies on the stones.";
+      }
+      if (this.depth === 16 && !this.player.hasMagatama) {
+        return "The last gate wants the Magatama in your hand.";
+      }
+      if (enemyAt(state, hex)) {
+        return "A yokai bars the torii. Clear the gate first.";
+      }
+      if (bombAt(state, hex)) {
+        return "Fire holds the gate. The torii will wait.";
+      }
+      const dist = this.player.hex.distance(hex);
+      if (dist > 1) {
+        return "Draw closer. The gate only opens underfoot.";
+      }
+      return "The torii will not take that step.";
+    }
+
+    if (!isLandTile(hex, state.tiles)) {
+      return "That stone will not take your weight.";
+    }
+    if (enemyAt(state, hex)) {
+      return "You cannot step through a body. Cut or drive it aside.";
+    }
+    if (bombAt(state, hex)) {
+      return "That stone is already claimed by fire.";
+    }
+    if (this.shrine && hex.equals(this.shrine) && !this.prayed) {
+      return "Draw closer. The shrine only hears those at its threshold.";
+    }
+    return "That stone will not take your weight.";
   }
 
   tryBash(hex) {
@@ -277,18 +332,34 @@ export class Game {
     for (const m of result.log) this.cbs.onMessage?.(m);
 
     if (result.dead || this.player.hp <= 0) {
-      this.player.hp = 0;
-      this.emit();
-      this.cbs.onDeath?.(result.killer || "a yokai", {
-        depth: this.depth,
-        kills: this.player.kills,
-        turns: this.turn,
-      });
+      this.die(result.killer || "a yokai", { fx: result.fx });
+      return;
+    }
+
+    // Cornered: no step, no leap, no way to clear a blocking body
+    if (isPlayerTrapped(this.getState())) {
+      this.cbs.onMessage?.(
+        "Hemmed in. No stone left to take your weight — the dark closes over you."
+      );
+      this.die("a trap with no step left", { fxDurationMs: 900 });
       return;
     }
 
     this.mode = "move";
     this.emit();
+  }
+
+  /** HP to zero, lock input, show death after VFX beat. */
+  die(killer, { fx = null, fxDurationMs = null } = {}) {
+    this.player.hp = 0;
+    this.busy = true;
+    this.emit();
+    this.cbs.onDeath?.(killer, {
+      depth: this.depth,
+      kills: this.player.kills,
+      turns: this.turn,
+      fxDurationMs: fxDurationMs ?? maxFxDuration(fx),
+    });
   }
 
   onReachExit() {

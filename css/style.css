@@ -41,6 +41,10 @@ body {
   font-family: var(--font-ui);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  /* Dragging text highlights is pure noise mid-fight */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #app {

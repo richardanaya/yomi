@@ -253,9 +253,15 @@ function startGame() {
       };
     },
     onDeath(killer, stats) {
-      deathMsg.textContent = `It was ${killer} that closed the story.`;
-      deathStats.textContent = `Stratum ${stats.depth} · ${stats.kills} felled · ${stats.turns} breaths`;
-      modalDeath.classList.remove("hidden");
+      // Let the killing blow read: Tengu arrow (~420ms), red hit flash (~420ms), brief hold
+      const fxMs = stats.fxDurationMs || 0;
+      const delay = Math.max(750, fxMs + 320);
+      clearTimeout(deathRevealTimer);
+      deathRevealTimer = setTimeout(() => {
+        deathMsg.textContent = `It was ${killer} that closed the story.`;
+        deathStats.textContent = `Stratum ${stats.depth} · ${stats.kills} felled · ${stats.turns} breaths`;
+        modalDeath.classList.remove("hidden");
+      }, delay);
     },
     onWin(stats) {
       winStats.textContent = `${stats.kills} yokai left behind · ${stats.turns} breaths in the dark`;
@@ -271,7 +277,11 @@ function startGame() {
   startLoop();
 }
 
+let deathRevealTimer = 0;
+
 function hideModals() {
+  clearTimeout(deathRevealTimer);
+  deathRevealTimer = 0;
   modalBlessing.classList.add("hidden");
   modalPause.classList.add("hidden");
   modalDeath.classList.add("hidden");
@@ -421,6 +431,8 @@ window.addEventListener("keydown", (evt) => {
   if (!game || screens.game.classList.contains("active") === false) return;
   if (modalBlessing && !modalBlessing.classList.contains("hidden")) return;
   if (!modalDeath.classList.contains("hidden") || !modalWin.classList.contains("hidden")) return;
+  // Death beat: VFX still playing, end dialog not yet up
+  if (game.busy && game.player.hp <= 0) return;
 
   const key = evt.key.toLowerCase();
   if (key === "1" || key === "m") game.setMode("move");

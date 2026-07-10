@@ -166,6 +166,32 @@ export function getLeapTargets(state) {
   return targets;
 }
 
+/**
+ * True when the player has no Ayumi/Hishō landing and cannot clear a
+ * neighboring body with Keri or Nage — softlock / cornered to death.
+ */
+export function isPlayerTrapped(state) {
+  if (getWalkTargets(state).length > 0) return false;
+  if (getLeapTargets(state).length > 0) return false;
+
+  const p = state.player;
+  for (const dir of HEX_DIRS) {
+    const n = p.hex.add(dir);
+    const e = enemyAt(state, n);
+    if (!e) continue;
+    // Would that stone be a step if the body were gone?
+    if (!isLandTile(n, state.tiles)) continue;
+    if (bombAt(state, n)) continue;
+    if (state.shrine && n.equals(state.shrine) && !state.prayed) continue;
+    if (n.equals(state.exit) && !p.hasYari) continue;
+    if (state.depth === 16 && n.equals(state.exit) && !p.hasMagatama) continue;
+
+    if (p.bashCooldown === 0) return false; // Keri can drive them off
+    if (p.hasYari && p.hex.distance(n) <= p.throwRange) return false; // Nage
+  }
+  return true;
+}
+
 export function getBashTargets(state) {
   if (state.player.bashCooldown > 0) return [];
   const p = state.player.hex;
